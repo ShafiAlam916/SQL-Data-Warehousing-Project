@@ -1,21 +1,13 @@
 /*
 =============================================================
-Silver Layer – Source Table Initialization Script
+DDL Script: Create Silver Tables
 =============================================================
 Script Purpose:
-    This script prepares the silver layer of the data warehouse
-    by recreating raw ingestion tables from two source systems:
-    CRM and ERP.
+	This script creates tables in the 'silver' schema, dropping existing tables 
+    if they already exist.
+	  Run this script to re-define the DDL structure of 'bronze' Tables
+This script prepares the Silver layer of the data warehouse by recreating standardized tables derived from the Bronze layer.
 
-    - Any existing tables with the same names will be dropped.
-    - Six tables are created inside the 'silver' schema.
-    - Three tables originate from the CRM source system.
-    - Three tables originate from the ERP source system.
-
-    These tables represent the raw data ingestion layer of the
-    warehouse pipeline. No transformations or constraints are
-    applied at this stage. The structure closely mirrors the
-    original source systems.
 =============================================================
 */
 
