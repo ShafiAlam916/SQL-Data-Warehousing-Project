@@ -1,67 +1,99 @@
-
 -- CRM data is master data here so every table is created using CRM tables in left join
 
-create view gold.dim_customers as 
-	select
-		row_number() over(order by cst_id) as customer_key,
-		ci.cst_id as customer_id,
-		ci.cst_key as customer_number,
-		ci.cst_firstname as first_name,
-		ci.cst_lastname as last_name,
-		lo.cntry as country,
-		ci.cst_marital_status as marital_status,
-		case 
-				when ci.cst_gndr != "n/a" then ci.cst_gndr
-				else coalesce(cu.gen, "n/a")
-		end as gender,
-		cu.bdate as birth_date,
-		ci.cst_create_date as create_date
-		
-	from silver.crm_cust_info ci
-	left join silver.erp_cust_az12 cu
-	on ci.cst_key = cu.cid
-	left join silver.erp_loc_a101 lo 
-	on  ci.cst_key = lo.cid;
-	;
+/*
+===============================================================================
+DDL Script: Create Gold Layer Views
+===============================================================================
+Script Purpose:
+    This script defines the views for the Gold layer of the data warehouse.
+    The Gold layer represents the finalized dimensional model (Star Schema),
+    including fact and dimension views optimized for analytics.
+
+    Each view applies the necessary transformations and integrates data 
+    from the Silver layer to generate refined, enriched, and 
+    business-consumable datasets.
+
+Usage:
+    - These views are intended to be queried directly for reporting,
+      dashboards, and analytical workloads.
+===============================================================================
+*/
+
+-- =============================================================================
+-- Create Dimension: gold.dim_customers
+-- =============================================================================
+
+DROP VIEW IF EXISTS gold.dim_customers;
+
+CREATE VIEW gold.dim_customers AS
+SELECT
+    ROW_NUMBER() OVER (ORDER BY cst_id) AS customer_key,
+    ci.cst_id            AS customer_id,
+    ci.cst_key           AS customer_number,
+    ci.cst_firstname     AS first_name,
+    ci.cst_lastname      AS last_name,
+    lo.cntry             AS country,
+    ci.cst_marital_status AS marital_status,
+    CASE 
+        WHEN ci.cst_gndr != "n/a" THEN ci.cst_gndr
+        ELSE COALESCE(cu.gen, "n/a")
+    END AS gender,
+    cu.bdate             AS birth_date,
+    ci.cst_create_date   AS create_date
+FROM silver.crm_cust_info ci
+LEFT JOIN silver.erp_cust_az12 cu
+    ON ci.cst_key = cu.cid
+LEFT JOIN silver.erp_loc_a101 lo 
+    ON ci.cst_key = lo.cid
+;
 
 
+-- =============================================================================
+-- Create Dimension: gold.dim_products
+-- =============================================================================
+
+DROP VIEW IF EXISTS gold.dim_products;
+
+CREATE VIEW gold.dim_products AS
+SELECT
+    ROW_NUMBER() OVER (ORDER BY pi.prd_start_date, pi.prd_id) AS product_key,
+    pi.prd_id        AS product_id,
+    pi.prd_key       AS product_number,
+    pi.prd_nm        AS product_name,
+    pi.cat_id        AS category_id,
+    pc.cat           AS category,
+    pc.subcat        AS sub_category,
+    pc.maintenance,
+    pi.prd_cost      AS product_cost,
+    pi.prd_line      AS product_line,    
+    pi.prd_start_date AS start_date
+FROM silver.crm_prd_info pi
+LEFT JOIN silver.erp_px_cat_g1v2 pc
+    ON pi.cat_id = pc.id
+WHERE pi.prd_end_date IS NULL
+;
 
 
-create view gold.dim_products as
-	select
-		ROW_NUMBER() over(order by pi.prd_start_date, pi.prd_id) as product_key,
-		pi.prd_id as product_id,
-		pi.prd_key as product_number,
-		pi.prd_nm as product_name,
-		pi.cat_id as category_id,
-		pc.cat as category,
-		pc.subcat as sub_category,
-		pc.maintenance,
-		pi.prd_cost as product_cost,
-		pi.prd_line as product_line,    
-		pi.prd_start_date as start_date
-	from silver.crm_prd_info pi
-	left join silver.erp_px_cat_g1v2 pc
-	on pi.cat_id = pc.id
-	where pi.prd_end_date is null
-	;
+-- =============================================================================
+-- Create Fact: gold.fact_sales
+-- =============================================================================
 
+DROP VIEW IF EXISTS gold.fact_sales;
 
-
-create view gold.fact_sales as
-select
-	s.sls_order_num as order_number,
+CREATE VIEW gold.fact_sales AS
+SELECT
+    s.sls_order_num  AS order_number,
     p.product_key,
     c.customer_key,
-    s.sls_order_dt as order_date,
-    s.sls_ship_dt as shipping_date,
-    s.sls_due_dt as due_date,
-    s.sls_sales as sales,
-    s.sls_quantity as quantity,
-    s.sls_price as price
-from silver.crm_sales_details s
-left join gold.dim_customers c
-on s.sls_cust_id = c.customer_id
-left join  gold.dim_products p
-on s.sls_prd_key = p.product_number
+    s.sls_order_dt   AS order_date,
+    s.sls_ship_dt    AS shipping_date,
+    s.sls_due_dt     AS due_date,
+    s.sls_sales      AS sales,
+    s.sls_quantity   AS quantity,
+    s.sls_price      AS price
+FROM silver.crm_sales_details s
+LEFT JOIN gold.dim_customers c
+    ON s.sls_cust_id = c.customer_id
+LEFT JOIN gold.dim_products p
+    ON s.sls_prd_key = p.product_number
 ;
