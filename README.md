@@ -82,7 +82,7 @@ These datasets were consolidated, standardized, and transformed through Bronze, 
 ## 🔄 Data Lineage Diagram
 
 <!-- Insert Data Lineage Image Below -->
-![Data Lineage Diagram](Resources/data_lineage.png)
+![Data Lineage Diagram](resources/Data Flow (Data Lineage Diagram).png)
 
 *Figure: End-to-end data lineage from source systems to analytical Gold layer*
 
@@ -91,7 +91,7 @@ These datasets were consolidated, standardized, and transformed through Bronze, 
 ## 🏗️ Data Architecture (Medallion Architecture)
 
 <!-- Insert Medallion Architecture Image Below -->
-![Medallion Architecture Diagram](Resources/medallion_architecture.png)
+![Medallion Architecture Diagram](resources/DWH Architecture.png)
 
 *Figure: Medallion Data Warehousing Architecture (Bronze → Silver → Gold Layers)*
 
